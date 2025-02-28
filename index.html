@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-Wallet Connect</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Multi-Wallet Connect</h1>
+    <p>Connect multiple wallets simultaneously</p>
+    
+    <div class="wallet-buttons">
+      <button id="connect-metamask" class="wallet-button">Connect MetaMask</button>
+      <button id="connect-coinbase" class="wallet-button">Connect Coinbase</button>
+      <button id="connect-trustwallet" class="wallet-button">Connect Trust Wallet</button>
+      <button id="connect-bitget" class="wallet-button">Connect BitGet</button>
+    </div>
+    
+    <div class="wallet-info">
+      <h2>Connected Wallets</h2>
+      <div id="wallet-list"></div>
+    </div>
+  </div>
+  
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

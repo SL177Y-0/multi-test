@@ -1,0 +1,20 @@
+{
+  "name": "wallet-connect-mvp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@metamask/detect-provider": "^2.0.0",
+    "@solana/web3.js": "^1.78.0",
+    "ethers": "^6.8.1",
+    "rpc-websockets": "^9.1.0"
+  },
+  "devDependencies": {
+    "vite": "^4.5.9"
+  }
+}
