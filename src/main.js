@@ -6,7 +6,7 @@ const connectedWallets = {};
 
 // Function to shorten wallet addresses for display
 function shortenAddress(address) {
-  return address.slice(0, 6) + '...' + address.slice(-4);
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 // Function to update the UI with connected wallets
@@ -45,7 +45,7 @@ function updateWalletList() {
   });
 }
 
-// Function to connect to a wallet with its own provider
+// Function to connect to an Ethereum wallet
 async function connectEthereumWallet(walletType, provider) {
   try {
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
@@ -57,9 +57,10 @@ async function connectEthereumWallet(walletType, provider) {
     };
 
     localStorage.setItem(`${walletType}_connected`, accounts[0]);
-    
-    document.getElementById(`connect-${walletType}`).classList.add('connected');
-    document.getElementById(`connect-${walletType}`).textContent = `${walletType.charAt(0).toUpperCase() + walletType.slice(1)} Connected`;
+
+    const connectButton = document.getElementById(`connect-${walletType}`);
+    connectButton.classList.add('connected');
+    connectButton.textContent = `${walletType.charAt(0).toUpperCase() + walletType.slice(1)} Connected`;
 
     updateWalletList();
   } catch (error) {
@@ -110,7 +111,6 @@ async function connectTrustWallet() {
   }
 }
 
-
 // Function to connect BitGet Wallet
 async function connectBitGet() {
   const provider = window.bitkeep?.ethereum || window.bitget?.ethereum;
@@ -118,6 +118,32 @@ async function connectBitGet() {
     await connectEthereumWallet('bitget', provider);
   } else {
     alert('BitGet Wallet is not installed.');
+  }
+}
+
+// Function to connect Phantom Wallet (Solana)
+async function connectPhantom() {
+  if (window.solana && window.solana.isPhantom) {
+    try {
+      const response = await window.solana.connect();
+      connectedWallets['phantom'] = {
+        address: response.publicKey.toString(),
+        provider: window.solana
+      };
+
+      localStorage.setItem('phantom_connected', response.publicKey.toString());
+
+      const connectButton = document.getElementById('connect-phantom');
+      connectButton.classList.add('connected');
+      connectButton.textContent = 'Phantom Connected';
+
+      updateWalletList();
+    } catch (error) {
+      console.error('Failed to connect to Phantom:', error);
+      alert(`Failed to connect to Phantom. ${error.message}`);
+    }
+  } else {
+    alert('Phantom Wallet is not installed.');
   }
 }
 
@@ -137,28 +163,32 @@ function disconnectWallet(walletType) {
 
 // Restore connections from localStorage
 async function restoreConnections() {
-  async function tryRestoreWallet(walletType, provider) {
-    if (localStorage.getItem(`${walletType}_connected`) && provider) {
+  const walletTypes = [
+    { type: 'metamask', provider: window.ethereum?.isMetaMask ? window.ethereum : null },
+    { type: 'coinbase', provider: window.coinbaseWalletExtension || (window.ethereum?.isCoinbaseWallet ? window.ethereum : null) },
+    { type: 'trustwallet', provider: window.ethereum?.isTrust ? window.ethereum : null },
+    { type: 'bitget', provider: window.bitkeep?.ethereum || window.bitget?.ethereum },
+    { type: 'phantom', provider: window.solana && window.solana.isPhantom ? window.solana : null }
+  ];
+
+  for (const { type, provider } of walletTypes) {
+    if (localStorage.getItem(`${type}_connected`) && provider) {
       try {
         const accounts = await provider.request({ method: 'eth_accounts' });
         if (accounts.length > 0) {
-          connectedWallets[walletType] = {
+          connectedWallets[type] = {
             address: accounts[0],
             provider: new BrowserProvider(provider)
           };
-          document.getElementById(`connect-${walletType}`).classList.add('connected');
-          document.getElementById(`connect-${walletType}`).textContent = `${walletType.charAt(0).toUpperCase() + walletType.slice(1)} Connected`;
+          const connectButton = document.getElementById(`connect-${type}`);
+          connectButton.classList.add('connected');
+          connectButton.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} Connected`;
         }
       } catch (error) {
-        console.error(`Failed to restore ${walletType} connection:`, error);
+        console.error(`Failed to restore ${type} connection:`, error);
       }
     }
   }
-
-  await tryRestoreWallet('metamask', window.ethereum?.isMetaMask ? window.ethereum : null);
-  await tryRestoreWallet('coinbase', window.coinbaseWalletExtension || (window.ethereum?.isCoinbaseWallet ? window.ethereum : null));
-  await tryRestoreWallet('trustwallet', window.ethereum?.isTrust ? window.ethereum : null);
-  await tryRestoreWallet('bitget', window.bitkeep?.ethereum || window.bitget?.ethereum);
 
   updateWalletList();
 }
@@ -169,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('connect-coinbase')?.addEventListener('click', connectCoinbase);
   document.getElementById('connect-trustwallet')?.addEventListener('click', connectTrustWallet);
   document.getElementById('connect-bitget')?.addEventListener('click', connectBitGet);
+  document.getElementById('connect-phantom')?.addEventListener('click', connectPhantom);
 
   restoreConnections();
 });
@@ -178,7 +209,8 @@ const providerEvents = {
   metamask: window.ethereum?.isMetaMask ? window.ethereum : null,
   coinbase: window.coinbaseWalletExtension || (window.ethereum?.isCoinbaseWallet ? window.ethereum : null),
   trustwallet: window.ethereum?.isTrust ? window.ethereum : null,
-  bitget: window.bitkeep?.ethereum || window.bitget?.ethereum
+  bitget: window.bitkeep?.ethereum || window.bitget?.ethereum,
+  phantom: window.solana && window.solana.isPhantom ? window.solana : null
 };
 
 Object.entries(providerEvents).forEach(([walletType, provider]) => {
